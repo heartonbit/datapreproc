@@ -11,4 +11,15 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
     && chmod -R 777 /.config/gcloud
 
 RUN source activate rapids && \
-    pip install papermill pandas numpy pyarrow dask lxml parquet-cli google-cloud-bigquery db-dtypes openpyxl
+    pip install papermill \
+	pandas \
+	numpy \
+	pyarrow \
+	dask \
+	lxml \
+	parquet-cli \
+	google-cloud-bigquery \
+	db-dtypes \
+	openpyxl \
+	obonet \
+	networkx
