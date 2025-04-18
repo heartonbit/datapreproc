@@ -22,4 +22,6 @@ RUN source activate rapids && \
 	db-dtypes \
 	openpyxl \
 	obonet \
-	networkx
+	networkx \
+	xmltodict \
+	cmapPy 
