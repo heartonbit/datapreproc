@@ -1,0 +1,70 @@
+This docker image is  based on `rapidsai/notebooks:24.08-cuda12.2-py3.11`  from https://hub.docker.com/r/rapidsai/rapidsai/ with `Google Cloud SDK` installed and has number of python dependencies for data preprocessing job such as:
+
+```
+papermill 
+pandas 
+numpy 
+pyarrow 
+dask 
+lxml 
+parquet-cli 
+db-dtypes
+google-cloud-bigquery 
+openpyxl
+jupyter
+```
+`Dockerfile` is on https://github.com/heartonbit/datapreproc/tree/main/notebook.
+
+Environmental variable GOOGLE_APPLICATION_CREDENTIALS is required to be configured beforehand.
+To run a jupyter notebook, excute the following docker command. 
+If you don't have any gpu, then exclude `--gpus all` part.
+
+```
+docker run --privileged=true -it --rm --gpus all -P -d \
+-v ${PWD}:/home/work \
+-v ${GOOGLE_APPLICATION_CREDENTIALS}:/gcp_key_file.json \
+-e GOOGLE_APPLICATION_CREDENTIALS=/gcp_key_file.json \
+-e DISABLE_JUPYTER=true \
+-w /home/work \
+--name datapreproc \
+heartonbit/datapreproc-notebooks:latest \
+jupyter lab --notebook-dir=/home/work --ip 0.0.0.0 --no-browser --allow-root 
+```
+
+To get the notebook URL, run:
+
+```
+echo "http://`hostname -i`:`docker port datapreproc-notebooks | grep '8888/tcp -> 0.0.0.0' | grep -o ':[0-9]\+' | grep -o '[0-9]\+'`/lab?`docker exec -it datapreproc-notebooks jupyter server list | grep -o 'token=[[:alnum:]]*'`"
+
+```
+
+Or if you're using Linux system, add below lines to .bashrc, and run `rund` in a terminal then a jupyter notebook url will show up.
+
+```
+export GITHUB_ACCESS_TOKEN=ADD YOUR GITHUB ACCESS TOKEN HERE
+export GOOGLE_APPLICATION_CREDENTIALS=GOOGLE KEY FILE LOCATION
+
+alias rund='run_datapreproc-notebooks && sleep 3 && geturl ${USER}_`basename ${PWD} | tr 'A-Z' 'a-z'`'
+
+function run_datapreproc {
+local CONTAINER=${USER}_`basename ${PWD} | tr 'A-Z' 'a-z'`
+docker run --privileged=true -it --rm --gpus all -P -d \
+-v ${PWD}:/home/work \
+-v ${GOOGLE_APPLICATION_CREDENTIALS}:/key.json \
+-e GOOGLE_APPLICATION_CREDENTIALS=/key.json \
+-e DISABLE_JUPYTER=true \
+-w /home/work \
+--name ${CONTAINER} \
+heartonbit/datapreproc-notebooks:latest \
+jupyter lab --notebook-dir=/home/work --ip 0.0.0.0 --no-browser --allow-root 
+}
+
+function geturl {
+    local DEFAULT_CONTAINER=${USER}_`basename ${PWD} | tr 'A-Z' 'a-z'`
+    local CONTAINER=${1:-${DEFAULT_CONTAINER}}
+    local IP=`hostname -i`
+    local PORT=`docker port ${CONTAINER} | grep '8888/tcp -> 0.0.0.0' | grep -o ':[0-9]\+' | grep -o '[0-9]\+'`
+    local TOKEN=`docker exec -it ${CONTAINER} jupyter server list | grep -o 'token=[[:alnum:]]*'`
+    echo "http://${IP}:${PORT}/lab?${TOKEN}"
+}
+```
